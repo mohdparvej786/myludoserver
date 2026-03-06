@@ -8,15 +8,11 @@ clients = {}
 
 PORT = int(os.environ.get("PORT", 8765))
 
-def get_local_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "127.0.0.1"
+
+async def health_check(path, request_headers):
+    if path == "/health":
+        return (200, [("Content-Type", "text/plain")], b"OK")
+
 
 async def handler(websocket):
     addr = websocket.remote_address
@@ -61,6 +57,7 @@ async def handler(websocket):
 
         print(f"[-] DISCONNECT {player}")
 
+
 async def broadcast(message,sender):
 
     if clients:
@@ -70,19 +67,23 @@ async def broadcast(message,sender):
             return_exceptions=True
         )
 
-async def main():
 
-    ip = get_local_ip()
+async def main():
 
     print("\n================================")
     print("LUDO SERVER RUNNING")
-    print("IP:",ip)
     print("PORT:",PORT)
     print("================================\n")
 
-    async with websockets.serve(handler,"0.0.0.0",PORT):
+    async with websockets.serve(
+        handler,
+        "0.0.0.0",
+        PORT,
+        process_request=health_check
+    ):
 
         await asyncio.Future()
+
 
 if __name__ == "__main__":
 
