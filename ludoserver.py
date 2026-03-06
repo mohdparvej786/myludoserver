@@ -1,7 +1,6 @@
 import asyncio
 import json
 import websockets
-import socket
 import os
 
 clients = {}
@@ -9,7 +8,8 @@ clients = {}
 PORT = int(os.environ.get("PORT", 8765))
 
 
-async def health_check(path, request_headers):
+# HEALTH CHECK ROUTE
+def health_check(path, request_headers):
     if path == "/health":
         return (200, [("Content-Type", "text/plain")], b"OK")
 
@@ -54,14 +54,12 @@ async def handler(websocket):
     finally:
 
         player = clients.pop(websocket,"Unknown")
-
         print(f"[-] DISCONNECT {player}")
 
 
 async def broadcast(message,sender):
 
     if clients:
-
         await asyncio.gather(
             *[ws.send(message) for ws in clients if ws != sender],
             return_exceptions=True
@@ -81,10 +79,8 @@ async def main():
         PORT,
         process_request=health_check
     ):
-
         await asyncio.Future()
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
